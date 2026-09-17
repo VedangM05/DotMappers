@@ -95,26 +95,13 @@ class NLQueryEngine:
         return sql
 
     def _synthesize_answer(self, user_query: str, sql_query: str, results: List[Dict[str, Any]]) -> str:
-        """Generate conversational answer based on query results."""
+        """Generate simple answer based on query results."""
         if len(results) == 1 and len(results[0]) == 1:
             key, val = list(results[0].items())[0]
             val_str = f"{val:.2f}" if isinstance(val, float) else str(val)
-            return f"The result for '{user_query}' is {val_str} ({key.replace('_', ' ')})."
-            
-        system_prompt = (
-            "You are a helpful AI Support Analyst. "
-            "Given the user question, generated SQL query, and query results from the database, "
-            "provide a concise, direct, human-readable summary of the answer."
-        )
-        
-        preview_data = results[:10]
-        user_prompt = (
-            f"Question: {user_query}\n"
-            f"SQL Query: {sql_query}\n"
-            f"Data Summary (Total rows: {len(results)}):\n{preview_data}\n\n"
-            "Summary Answer:"
-        )
-        
-        return llm.generate(prompt=user_prompt, system_prompt=system_prompt)
+            return f"Result: {val_str} ({key.replace('_', ' ').title()})"
+
+        # Skip LLM synthesis, just return row count summary
+        return f"Found {len(results)} record{'s' if len(results) != 1 else ''}. See results below."
 
 query_engine = NLQueryEngine()
