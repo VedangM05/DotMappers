@@ -45,5 +45,6 @@ Thumbs.db
 *.swp
 *.swo
 
-# Antigravity & AI Tool Cache
+# Development tools & IDEs
+.claude/
 .gemini/
