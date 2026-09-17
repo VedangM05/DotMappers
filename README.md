@@ -8,32 +8,45 @@ A production-grade AI system designed to ingest, query, analyze, and detect anom
 
 ## 🏛️ System Architecture
 
-```mermaid
-flowchart TD
-    User([User / Evaluator]) -->|Web Interface| UI[Vite React UI\n:3000]
-    User -->|REST API Request| API[FastAPI Server\n:8000]
-
-    subgraph Security Layer
-        RLS[PostgreSQL Row-Level Security\nAdmin | Scoped Agent | Public Anon]
-    end
-
-    subgraph AI Engine Layer
-        NLQE[Natural Language Text-to-SQL Engine]
-        RAG[pgvector Hybrid RAG Engine\nMiniLM 384-dim Embeddings]
-        ANOM[Multi-Factor Anomaly Detector\nIQR / Z-Score Outliers + SLA Rules]
-        LLM[Multi-LLM Provider Abstraction\nGroq Primary | Gemini Fallback | Rule Engine]
-    end
-
-    subgraph Data Store
-        DB[(Supabase PostgreSQL / Embedded DB\n500 Tickets + Vector Index)]
-    end
-
-    UI --> API
-    API --> RLS
-    RLS --> NLQE & RAG & ANOM
-    NLQE --> LLM & DB
-    RAG --> LLM & DB
-    ANOM --> LLM & DB
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    User / Evaluator                          │
+└──────────┬──────────────────────────────────┬────────────────┘
+           │                                  │
+           ▼                                  ▼
+    ┌──────────────┐                  ┌─────────────────┐
+    │ React Web UI │                  │  FastAPI REST   │
+    │   (Vite)     │                  │   Server        │
+    │   :3000      │                  │   :8000         │
+    └──────────────┘                  └────────┬────────┘
+                                               │
+                                               ▼
+                          ┌────────────────────────────────────┐
+                          │  PostgreSQL Row-Level Security     │
+                          │  (Admin | Agent | Public Anon)     │
+                          └────────────┬───────────────────────┘
+                                       │
+        ┌──────────────────────────────┼──────────────────────────────┐
+        │                              │                              │
+        ▼                              ▼                              ▼
+   ┌─────────────┐            ┌──────────────┐          ┌──────────────────┐
+   │ Text-to-SQL │            │    RAG       │          │  Anomaly         │
+   │   Engine    │            │  Engine      │          │  Detector        │
+   └──────┬──────┘            └──────┬───────┘          └────────┬─────────┘
+          │                          │                          │
+          └──────────────────────────┼──────────────────────────┘
+                                     │
+        ┌────────────────────────────┴────────────────────────────┐
+        │  Multi-LLM Provider Abstraction                         │
+        │  Groq (llama-3.3-70b) | Gemini | Fallback Engine       │
+        └────────────────────────────┬────────────────────────────┘
+                                     │
+                                     ▼
+                          ┌──────────────────────┐
+                          │  Supabase PostgreSQL │
+                          │  + pgvector Index    │
+                          │  (500 Tickets)       │
+                          └──────────────────────┘
 ```
 
 ---
