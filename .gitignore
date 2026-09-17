@@ -1,0 +1,49 @@
+# Environment Variables (Secrets)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python & Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Databases & Data Exports (Local execution artifacts)
+*.db
+*.sqlite3
+*.csv
+support_tickets.csv
+
+# Assessment Documents & Word Lock Files
+*.docx
+.~*.docx
+AI_Engineer_Assessment_Sprint.docx
+.~_Engineer_Assessment_Sprint.docx
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE & Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Antigravity & AI Tool Cache
+.gemini/

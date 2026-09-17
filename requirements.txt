@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+streamlit
+pandas
+numpy
+pydantic
+requests
+python-dotenv
+sentence-transformers
+psycopg2-binary
+pgvector
+supabase
+groq
+google-generativeai
+pytest
+httpx
