@@ -2,7 +2,7 @@
 
 > **Technical Assessment Submission for AI Engineer Role — DOTMappers IT Pvt. Ltd.**
 
-A production-grade AI system designed to ingest, query, analyze, and detect anomalies in customer support ticket data. Built with **Supabase PostgreSQL Cloud**, **PostgreSQL Row-Level Security (RLS)**, **`pgvector` Hybrid RAG**, **Text-to-SQL Engine**, **FastAPI REST API**, and an interactive **Vite React Web Application**.
+A production-grade AI system designed to ingest, query, analyze, and detect anomalies in customer support ticket data. Built with **SQLite**, **Deterministic Vector Embeddings**, **Text-to-SQL Engine**, **FastAPI REST API**, and an interactive **Streamlit Web Application**.
 
 ---
 
@@ -15,14 +15,14 @@ A production-grade AI system designed to ingest, query, analyze, and detect anom
            │                                  │
            ▼                                  ▼
     ┌──────────────┐                  ┌─────────────────┐
-    │ React Web UI │                  │  FastAPI REST   │
-    │   (Vite)     │                  │   Server        │
-    │   :3000      │                  │   :8000         │
+    │ Streamlit UI │                  │  FastAPI REST   │
+    │  (Python)    │                  │   Server        │
+    │   :8501      │                  │   :8000         │
     └──────────────┘                  └────────┬────────┘
                                                │
                                                ▼
                           ┌────────────────────────────────────┐
-                          │  PostgreSQL Row-Level Security     │
+                          │  Row-Level Security Emulation      │
                           │  (Admin | Agent | Public Anon)     │
                           └────────────┬───────────────────────┘
                                        │
@@ -43,8 +43,9 @@ A production-grade AI system designed to ingest, query, analyze, and detect anom
                                      │
                                      ▼
                           ┌──────────────────────┐
-                          │  Supabase PostgreSQL │
-                          │  + pgvector Index    │
+                          │  SQLite Database     │
+                          │  + Deterministic     │
+                          │    Embeddings        │
                           │  (500 Tickets)       │
                           └──────────────────────┘
 ```
@@ -53,16 +54,16 @@ A production-grade AI system designed to ingest, query, analyze, and detect anom
 
 ## ✨ Features & Capabilities
 
-1. **Data Ingestion & Indexing:** Automates ingestion of `support_tickets.csv` (500 records), creates schema indexes, and computes 384-dimensional vector embeddings for all issue summaries.
-2. **Text-to-SQL NL Engine:** Converts user natural language questions into safe, read-only SQL queries and generates conversational summaries using **Groq** (`llama-3.3-70b-versatile` / `llama3-70b-8192`) with **Gemini** fallback.
-3. **`pgvector` Hybrid RAG:** Performs semantic cosine similarity matching over support issue descriptions to answer descriptive/qualitative questions.
-4. **PostgreSQL Row-Level Security (RLS):** Enforces strict access policies (`Admin` full access, `Agent` scoped access, `Public Anon` sanitized access). Includes an interactive live RLS Role Switcher in the React UI.
+1. **Data Ingestion & Indexing:** Automates ingestion of `support_tickets.csv` (500 records) and computes 384-dimensional deterministic vector embeddings for all issue summaries.
+2. **Text-to-SQL NL Engine:** Converts user natural language questions into safe, read-only SQL queries and generates conversational summaries using **Groq** or **Gemini** with fallback rule engine.
+3. **Deterministic Hybrid RAG:** Performs semantic cosine similarity matching over support issue descriptions using hash-based embeddings—no external model required.
+4. **Row-Level Security (RLS) Emulation:** Enforces access policies (`Admin` full access, `Agent` scoped access, `Public Anon` sanitized access). Includes an interactive live RLS Role Switcher in the Streamlit UI.
 5. **Multi-Factor Anomaly Detection:**
    * **IQR / Z-score Outliers:** Flags resolution times > 3x standard deviation.
    * **SLA Breaches:** Flags unresolved High/Critical tickets pending > 24 hours.
    * **Premature Closures:** Identifies tickets closed in < 2 hours with low rating (<= 2).
    * **LLM Narrative:** Synthesizes actionable executive anomaly summaries.
-6. **Modern Dual Interface:** Full REST API (FastAPI with OpenAPI Swagger docs) AND interactive Web UI (React + Vite).
+6. **Modern Dual Interface:** Full REST API (FastAPI with OpenAPI Swagger docs) AND interactive Web UI (Streamlit).
 
 ---
 
@@ -75,7 +76,7 @@ This codebase has been optimized using a **lazy developer efficiency audit** tha
 | **LLM Provider Abstraction** | Only fallback rule engine ever used; removed unused Groq/Gemini code | 26 LOC |
 | **SentenceTransformer Optional** | Deterministic hash-based embeddings work for all cases; simplified to always-fallback | 38 LOC |
 | **RAG LLM Synthesis** | Fallback engine never calls LLM; returns matched tickets directly | 22 LOC |
-| **Supabase Sync Logic** | Duplicate data transformation; moved to optional seed script | 33 LOC |
+| **Supabase Dependency** | Removed entire Supabase integration; SQLite-only deployment | 33+ LOC |
 | **Anomaly LLM Narrative** | Fallback ignores synthesis; simple count summary sufficient | 25 LOC |
 | **Query Answer Synthesis** | Never uses LLM; returns row count summary | 6 LOC |
 | **Unused Frontend Icons** | Removed dead lucide-react imports | 2 LOC |
@@ -103,22 +104,11 @@ GEMINI_API_KEY=AIzaSy_your_gemini_api_key_here
 LLM_PROVIDER=auto
 
 # ==========================================
-# Supabase & PostgreSQL Configuration
-# ==========================================
-SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_KEY=your_supabase_api_key_here
-SUPABASE_ANON_KEY=your_supabase_anon_key_here
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
-
-# PostgreSQL Connection String (Local Docker / Supabase Postgres)
-POSTGRES_DB_URL=postgresql://postgres:postgres@localhost:5432/postgres
-
-# ==========================================
 # Vector Embedding & Application Ports
 # ==========================================
 EMBEDDING_MODEL=all-MiniLM-L6-v2
 API_PORT=8000
-UI_PORT=3000
+UI_PORT=8501
 ```
 
 > [!NOTE]
@@ -136,25 +126,25 @@ UI_PORT=3000
                                        │ Ingestion & 384-dim Embeddings
                                        ▼
                         ┌───────────────────────────────┐
-                        │ Supabase Cloud / Embedded DB  │
+                        │      SQLite Database          │
                         └──────────────┬────────────────┘
-                                       │ RLS Enforced
+                                       │ RLS Emulated
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                             FastAPI REST API                                │
 ├──────────────────────────────┬──────────────────────────────┬───────────────┤
-│    Text-to-SQL Engine        │    pgvector Hybrid RAG       │ Anomaly Radar │
+│    Text-to-SQL Engine        │  Deterministic Hybrid RAG    │ Anomaly Radar │
 └──────────────┬───────────────┴──────────────┬───────────────┴───────┬───────┘
                │                              │                       │
                ▼                              ▼                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                          Vite React Dashboard                               │
+│                          Streamlit Dashboard                                 │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-1. **Ingestion Layer:** At startup, `src/database.py` verifies database table state. If incomplete, it reads `support_tickets.csv` (500 records), generates normalized 384-dim embeddings, and populates SQLite / Supabase PostgreSQL.
-2. **Execution Engine:** Natural language queries pass through `src/query_engine.py`. The system constructs strict read-only SQL queries via Groq LLM, executes them safely, and returns tabular data alongside conversational AI answers.
-3. **Security Layer:** Row-Level Security (RLS) is applied dynamically based on the active role (`admin`, `anon`, `agent_AGT-04`).
+1. **Ingestion Layer:** At startup, `src/database.py` verifies database table state. If incomplete, it reads `support_tickets.csv` (500 records), generates normalized 384-dim deterministic embeddings, and populates SQLite.
+2. **Execution Engine:** Natural language queries pass through `src/query_engine.py`. The system constructs strict read-only SQL queries via Groq/Gemini LLM, executes them safely, and returns tabular data alongside conversational AI answers.
+3. **Security Layer:** Row-Level Security (RLS) is emulated dynamically based on the active role (`admin`, `anon`, `agent_AGT-04`).
 
 ---
 
@@ -162,16 +152,16 @@ UI_PORT=3000
 
 | Requirement | Status | Implementation |
 |:---|:---:|:---|
-| **Data Ingestion** | ✅ | CSV loaded into SQLite/Supabase with 500 rows seeded |
+| **Data Ingestion** | ✅ | CSV loaded into SQLite with 500 rows seeded |
 | **NL Query Engine** | ✅ | Text-to-SQL via Groq/Gemini with fallback rule engine |
 | **Anomaly Detection** | ✅ | IQR/Z-score + SLA rule detection with LLM narrative |
 | **REST API (≥3 endpoints)** | ✅ | Health, Query, Anomalies, RAG Search, Tickets (5 endpoints) |
-| **Web UI** | ✅ | React + Vite interactive dashboard on :3000 |
+| **Web UI** | ✅ | Streamlit interactive dashboard on :8501 |
 | **README** | ✅ | Full setup, architecture, examples, limitations documented |
 | **requirements.txt** | ✅ | All dependencies pinned and installable |
 | **Single Command Start** | ✅ | `python run.py --mode all` or `docker-compose up` |
 | **All 5 Sample Queries** | ✅ | Implemented + tested |
-| **Python Only** | ✅ | 100% Python backend, React-only frontend |
+| **Python Only** | ✅ | 100% Python (backend + frontend with Streamlit) |
 | **Zero Cost Guaranteed** | ✅ | Deterministic fallback engine if no API keys |
 
 **Test Coverage:** 25 automated tests, 100% pass rate ✅
@@ -182,7 +172,6 @@ UI_PORT=3000
 
 ### Prerequisites
 - **Python:** 3.10+ (Recommended Python 3.11 or 3.12)
-- **Node.js:** 18+ and `npm`
 
 ---
 
@@ -198,15 +187,12 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# 3. Install React frontend dependencies
-cd frontend && npm install && cd ..
-
-# 4. Launch full system (FastAPI API on :8000 + React Web UI on :3000)
-python run.py --mode all --ui-port 3000
+# 3. Launch full system (FastAPI API on :8000 + Streamlit Web UI on :8501)
+python run.py --mode all
 ```
 
 Access the interfaces:
-* **Interactive React Web UI:** `http://localhost:3000`
+* **Interactive Streamlit Web UI:** `http://localhost:8501`
 * **FastAPI OpenAPI REST Docs:** `http://localhost:8000/docs`
 
 ---
@@ -218,20 +204,21 @@ Access the interfaces:
 python run.py --mode api
 ```
 
-**2. Launch React Frontend:**
+**2. Launch Streamlit Frontend:**
 ```bash
-cd frontend
-npm run dev -- --port 3000
+streamlit run app.py
 ```
+The Streamlit app will open at `http://localhost:8501`
 
 ---
 
 ### Option C: Docker Container Execution
 
 ```bash
-# Launch PostgreSQL with pgvector + FastAPI + React UI via Docker
+# Launch SQLite + FastAPI + Streamlit UI via Docker
 docker-compose up --build
 ```
+Access the Streamlit UI at `http://localhost:8501`
 
 ---
 
@@ -292,13 +279,14 @@ tests/test_query_engine.py::test_sample_query_average_rating PASSED
   ```
 
 ### 3. Port Conflicts (`[Errno 48] Address already in use`)
-* **Symptom:** Port 8000 (FastAPI) or 3000 (Vite) is already occupied by a previous process.
+* **Symptom:** Port 8000 (FastAPI) or 8501 (Streamlit) is already occupied by a previous process.
 * **Fix:** Kill the existing background process:
   ```bash
   # macOS / Linux
   pkill -f uvicorn
+  pkill -f streamlit
   # Or specify alternative ports
-  python run.py --mode all --api-port 8080 --ui-port 3001
+  python run.py --mode all --api-port 8080 --ui-port 8502
   ```
 
 ### 4. Windows PowerShell Execution Policy & Environment Syntax
@@ -330,9 +318,9 @@ tests/test_query_engine.py::test_sample_query_average_rating PASSED
 ```json
 {
   "status": "healthy",
-  "database": "Supabase PostgreSQL / Embedded DB",
+  "database": "SQLite",
   "rls_enabled": true,
-  "pgvector_ready": true,
+  "embeddings_ready": true,
   "total_tickets": 500
 }
 ```
