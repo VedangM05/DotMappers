@@ -3,7 +3,7 @@ import {
   Bot, AlertTriangle, Database, RefreshCw, Download, History, Moon, Sun, ChevronDown, X
 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8080';
+const API_BASE = 'http://localhost:8000';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
