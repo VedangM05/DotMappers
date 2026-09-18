@@ -17,6 +17,11 @@ class LLMProvider:
         if "how many" in p and "agent" in p:
             return "SELECT COUNT(DISTINCT agent_id) AS total_agents FROM tickets;"
         # Multi-filter queries: billing + critical + open
+        # Return full records if user says "show" or similar
+        if ("show" in p or "list" in p or "get" in p) and "billing" in p and "critical" in p and "open" in p:
+            return "SELECT ticket_id, category, priority, status, agent_id, issue_summary FROM tickets WHERE category = 'Billing' AND priority = 'Critical' AND status = 'Open';"
+        if ("show" in p or "list" in p or "get" in p) and "technical" in p and "critical" in p and "open" in p:
+            return "SELECT ticket_id, category, priority, status, agent_id, issue_summary FROM tickets WHERE category = 'Technical' AND priority = 'Critical' AND status = 'Open';"
         if "billing" in p and "critical" in p and "open" in p:
             return "SELECT COUNT(*) AS open_tickets_count FROM tickets WHERE category = 'Billing' AND priority = 'Critical' AND status = 'Open';"
         if "technical" in p and "critical" in p and "open" in p:
