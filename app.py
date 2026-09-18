@@ -60,7 +60,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # API Base
-API_BASE = 'http://localhost:8080'
+API_BASE = 'http://localhost:8000'
 
 # Initialize session state
 if 'active_tab' not in st.session_state:
@@ -137,11 +137,29 @@ if st.session_state.dashboard_stats is None:
     except Exception as e:
         st.error(f"Failed to connect to backend: {str(e)}")
 
-# Tabs
-tabs = st.tabs(["📊 Dashboard", "💬 Query", "🚨 Anomalies", "📈 Analytics"])
+# Tab Navigation (Radio buttons for programmatic control)
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    if st.button("📊 Dashboard", use_container_width=True):
+        st.session_state.active_tab = 'dashboard'
+        st.rerun()
+with col2:
+    if st.button("💬 Query", use_container_width=True):
+        st.session_state.active_tab = 'query'
+        st.rerun()
+with col3:
+    if st.button("🚨 Anomalies", use_container_width=True):
+        st.session_state.active_tab = 'anomalies'
+        st.rerun()
+with col4:
+    if st.button("📈 Analytics", use_container_width=True):
+        st.session_state.active_tab = 'analytics'
+        st.rerun()
+
+st.divider()
 
 # ==================== DASHBOARD TAB ====================
-with tabs[0]:
+if st.session_state.active_tab == 'dashboard':
     # Stats
     cols = st.columns(3)
 
@@ -189,8 +207,10 @@ with tabs[0]:
                 st.session_state.active_tab = 'query'
                 st.rerun()
 
+    st.divider()
+
 # ==================== QUERY TAB ====================
-with tabs[1]:
+if st.session_state.active_tab == 'query':
     # Query Input
     col1, col2 = st.columns([4, 1])
 
@@ -290,7 +310,7 @@ with tabs[1]:
                             st.code(result['generated_sql'], language='sql')
 
 # ==================== ANOMALIES TAB ====================
-with tabs[2]:
+if st.session_state.active_tab == 'anomalies':
     col1, col2 = st.columns([4, 1])
 
     with col1:
@@ -351,7 +371,7 @@ with tabs[2]:
             )
 
 # ==================== ANALYTICS TAB ====================
-with tabs[3]:
+if st.session_state.active_tab == 'analytics':
     st.markdown("### 📈 Dataset Analytics")
 
     # Fetch tickets on first load
