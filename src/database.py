@@ -5,35 +5,15 @@ import json
 import pandas as pd
 import numpy as np
 from typing import List, Dict, Any, Optional
-from src.config import (
-    CSV_FILE_PATH, SQLITE_DB_PATH, SUPABASE_URL, SUPABASE_KEY, 
-    SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY
-)
+from src.config import CSV_FILE_PATH, SQLITE_DB_PATH
 from src.embeddings import generate_batch_embeddings, generate_embedding, cosine_similarity
 
 logger = logging.getLogger(__name__)
 
 class DatabaseManager:
-    """
-    Unified Database Manager supporting:
-    1. Remote Supabase PostgreSQL with RLS and pgvector.
-    2. Local SQLite Engine with pgvector cosine simulation & RLS emulation for 100% offline zero-cost execution.
-    """
+    """SQLite Database Manager with deterministic embeddings and RLS emulation."""
     def __init__(self):
-        self.use_supabase = bool(SUPABASE_URL and (SUPABASE_KEY or SUPABASE_SERVICE_ROLE_KEY))
         self.db_path = SQLITE_DB_PATH
-        self.supabase_client = None
-        
-        if self.use_supabase:
-            try:
-                from supabase import create_client
-                key = SUPABASE_SERVICE_ROLE_KEY or SUPABASE_KEY
-                self.supabase_client = create_client(SUPABASE_URL, key)
-                logger.info("Connected to Supabase PostgreSQL cloud backend.")
-            except Exception as e:
-                logger.warning(f"Failed to connect to Supabase cloud ({e}). Falling back to local embedded database engine.")
-                self.use_supabase = False
-                
         self.init_database()
 
     def init_database(self):
@@ -160,7 +140,7 @@ class DatabaseManager:
 
     def vector_search(self, query_text: str, match_count: int = 5, role: str = "admin") -> List[Dict[str, Any]]:
         """
-        Perform pgvector / cosine similarity search against ticket issue summaries.
+        Perform deterministic cosine similarity search against ticket issue summaries.
         Returns top matching tickets with similarity score.
         """
         query_emb = generate_embedding(query_text)

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Bot, AlertTriangle, Database, RefreshCw, Download, History, Moon, Sun, ChevronDown, X
+  Bot, AlertTriangle, Database, RefreshCw, Download, History, Moon, Sun, ChevronDown, X, Sparkles,
+  Clock, Code2, Search, Terminal, TrendingUp
 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'http://localhost:8080';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -79,9 +80,16 @@ export default function App() {
       });
       const data = await res.json();
 
+      // Normalize response: RAG queries return retrieved_tickets, SQL returns data
+      if (data.retrieved_tickets && !data.data) {
+        data.data = data.retrieved_tickets;
+        console.log('Normalized RAG response: mapped retrieved_tickets to data');
+      }
+
       const executionTime = Date.now() - startTime;
       setQueryExecutionTime(executionTime);
       console.log('Query Response:', data);
+      console.log('Data available for table?', data.data && data.data.length > 0);
       setQueryResult(data);
 
       if (!data.error) {
@@ -266,7 +274,7 @@ export default function App() {
         {/* Tabs */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: `1px solid ${border}`, paddingBottom: '0.75rem' }}>
           {[
-            { id: 'dashboard', label: '📊 Dashboard', icon: BarChart3 },
+            { id: 'dashboard', label: '📊 Dashboard', icon: Database },
             { id: 'query', label: '💬 Query', icon: Bot },
             { id: 'anomalies', label: '🚨 Anomalies', icon: AlertTriangle },
             { id: 'analytics', label: '📈 Analytics', icon: TrendingUp }

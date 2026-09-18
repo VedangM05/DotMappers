@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="AI Support Ticket System REST API",
-    description="Production-grade AI System with Supabase PostgreSQL, pgvector Hybrid RAG, Text-to-SQL & Anomaly Detection",
+    description="Production-grade AI System with SQLite, Deterministic RAG, Text-to-SQL & Anomaly Detection",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -47,24 +47,24 @@ class RAGSearchRequest(BaseModel):
 
 @app.get("/api/v1/health", summary="Health Check & System Diagnostics")
 def health_check():
-    """Verify backend API, database connectivity, and vector index status."""
+    """Verify backend API, database connectivity, and embeddings status."""
     try:
         tickets = db.execute_raw_sql("SELECT COUNT(*) AS total FROM tickets;")
         total_tickets = tickets[0]["total"] if tickets else 0
         return {
             "status": "healthy",
-            "database": "Supabase PostgreSQL / Embedded DB",
+            "database": "SQLite",
             "rls_enabled": True,
-            "pgvector_ready": True,
+            "embeddings_ready": True,
             "total_tickets": total_tickets
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database Health Check Failed: {str(e)}")
 
-@app.post("/api/v1/query", summary="Execute Natural Language Query (Text-to-SQL or Hybrid RAG)")
+@app.post("/api/v1/query", summary="Execute Natural Language Query (Text-to-SQL or Deterministic RAG)")
 def process_natural_language_query(req: QueryRequest):
     """
-    Process natural language user question using Text-to-SQL engine or pgvector Hybrid RAG.
+    Process natural language user question using Text-to-SQL engine or Deterministic Hybrid RAG.
     Enforces Row-Level Security (RLS) based on the specified role.
     """
     if not req.query.strip():
@@ -99,10 +99,10 @@ def get_ticket_anomalies(role: str = Query("admin", description="RLS Role contex
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Anomaly detection failed: {str(e)}")
 
-@app.post("/api/v1/rag/search", summary="Direct Vector Similarity Search (pgvector)")
+@app.post("/api/v1/rag/search", summary="Direct Vector Similarity Search (Deterministic Embeddings)")
 def rag_vector_search(req: RAGSearchRequest):
     """
-    Direct pgvector similarity search over ticket issue summaries.
+    Direct deterministic vector similarity search over ticket issue summaries.
     """
     try:
         return rag_engine.search_and_synthesize(query=req.query, match_count=req.match_count, role=req.role)

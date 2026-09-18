@@ -8,13 +8,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_FILE_PATH = os.path.join(BASE_DIR, "support_tickets.csv")
 SQLITE_DB_PATH = os.path.join(BASE_DIR, "support_tickets.db")
 
-# Supabase / PostgreSQL Configuration
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-POSTGRES_DB_URL = os.getenv("POSTGRES_DB_URL", "postgresql://postgres:postgres@localhost:5432/postgres")
-
 # LLM Configuration
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")

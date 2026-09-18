@@ -102,7 +102,7 @@ class TestSprintCompliance:
         assert json_data["status"] == "healthy"
         assert json_data["total_tickets"] == 500
         assert json_data["rls_enabled"] is True
-        assert json_data["pgvector_ready"] is True
+        assert json_data["embeddings_ready"] is True
 
     def test_api_query_endpoint(self):
         """POST /api/v1/query compliance check."""

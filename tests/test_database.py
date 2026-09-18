@@ -16,7 +16,7 @@ def test_rls_anon_role_restriction():
     assert len(escalated_anon) == 0, "Anon role RLS policy must hide Escalated tickets"
 
 def test_vector_search_functionality():
-    """Verify pgvector similarity search returns relevant tickets."""
+    """Verify deterministic similarity search returns relevant tickets."""
     matches = db.vector_search(query_text="invoice billing charge error", match_count=3)
     assert len(matches) == 3
     assert "similarity" in matches[0]
