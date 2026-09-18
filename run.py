@@ -12,7 +12,7 @@ def main():
     parser = argparse.ArgumentParser(description="AI Support Ticket System — DOTMappers Assessment Runner")
     parser.add_argument("--mode", choices=["all", "api", "ui"], default="all", help="Service mode to start")
     parser.add_argument("--api-port", type=int, default=8000, help="FastAPI port")
-    parser.add_argument("--ui-port", type=int, default=3000, help="Vite React UI port")
+    parser.add_argument("--ui-port", type=int, default=8501, help="Streamlit UI port")
     args = parser.parse_args()
 
     # Ensure database initialization
@@ -40,17 +40,16 @@ def main():
             processes.append(api_proc)
 
         if args.mode in ["all", "ui"]:
-            time.sleep(1)
-            logger.info(f"Starting Vite React UI on http://localhost:{args.ui_port}...")
-            ui_proc = subprocess.Popen(
-                ["npm", "run", "dev", "--", "--port", str(args.ui_port), "--host"],
-                cwd=frontend_dir
-            )
+            time.sleep(2)
+            logger.info(f"Starting Streamlit UI on http://localhost:{args.ui_port}...")
+            ui_proc = subprocess.Popen([
+                "streamlit", "run", "app.py", "--server.port", str(args.ui_port)
+            ])
             processes.append(ui_proc)
 
         logger.info("System fully online!")
         logger.info(f"• OpenAPI REST Docs: http://localhost:{args.api_port}/docs")
-        logger.info(f"• React Web UI:      http://localhost:{args.ui_port}")
+        logger.info(f"• Streamlit Web UI:  http://localhost:{args.ui_port}")
 
         # Keep running
         for p in processes:
