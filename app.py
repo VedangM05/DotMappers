@@ -87,6 +87,8 @@ if 'show_sql' not in st.session_state:
     st.session_state.show_sql = False
 if 'auto_execute' not in st.session_state:
     st.session_state.auto_execute = False
+if 'results_page' not in st.session_state:
+    st.session_state.results_page = 0
 
 # Sidebar
 with st.sidebar:
@@ -271,6 +273,8 @@ if st.session_state.active_tab == 'query':
             st.session_state.query_result = data
             st.session_state.query_execution_time = int((time.time() - start_time) * 1000)
             st.session_state.auto_execute = False
+            st.session_state.results_page = 0
+            st.session_state.show_sql = False
 
             # Add to history
             if 'error' not in data:
@@ -303,6 +307,12 @@ if st.session_state.active_tab == 'query':
 
                 # Results section
                 if result.get('data') and len(result.get('data', [])) > 0:
+                    # Show SQL at top if requested
+                    if st.session_state.get('show_sql') and 'generated_sql' in result:
+                        st.markdown("<div style='font-weight: 600; color: #F8FAFC; margin-bottom: 0.5rem;'>📋 Generated SQL</div>", unsafe_allow_html=True)
+                        st.code(result['generated_sql'], language='sql')
+                        st.markdown("---")
+
                     # Header with buttons
                     col1, col2, col3 = st.columns([2, 1, 1])
                     with col1:
@@ -325,27 +335,44 @@ if st.session_state.active_tab == 'query':
                                 st.session_state.show_sql = not st.session_state.get('show_sql', False)
                                 st.rerun()
 
-                    # Data table
+                    # Data table with pagination
                     st.markdown("---")
 
-                    # Calculate dynamic height based on row count
-                    row_count = len(result['data'])
-                    min_height = 100
-                    height_per_row = 35
-                    table_height = min_height + (row_count * height_per_row)
+                    # Pagination logic
+                    items_per_page = 10
+                    total_rows = len(result['data'])
+                    total_pages = (total_rows + items_per_page - 1) // items_per_page
 
+                    # Get current page data
+                    start_idx = st.session_state.results_page * items_per_page
+                    end_idx = start_idx + items_per_page
+                    page_data = result['data'][start_idx:end_idx]
+
+                    # Display table
                     st.dataframe(
-                        result['data'],
+                        page_data,
                         use_container_width=True,
-                        height=table_height,
+                        height=150 + (len(page_data) * 35),
                         hide_index=True
                     )
 
-                    # Show SQL if requested
-                    if st.session_state.get('show_sql') and 'generated_sql' in result:
+                    # Pagination controls
+                    if total_pages > 1:
                         st.markdown("---")
-                        st.markdown("<div style='font-weight: 600; color: #F8FAFC; margin-bottom: 1rem;'>📋 Generated SQL</div>", unsafe_allow_html=True)
-                        st.code(result['generated_sql'], language='sql')
+                        col1, col2, col3 = st.columns([1, 2, 1])
+
+                        with col1:
+                            if st.button("← Prev", use_container_width=True, key="prev_page", disabled=st.session_state.results_page == 0):
+                                st.session_state.results_page -= 1
+                                st.rerun()
+
+                        with col2:
+                            st.markdown(f"<div style='text-align: center; color: #94A3B8; font-size: 0.9rem;'>Page {st.session_state.results_page + 1} / {total_pages}</div>", unsafe_allow_html=True)
+
+                        with col3:
+                            if st.button("Next →", use_container_width=True, key="next_page", disabled=st.session_state.results_page >= total_pages - 1):
+                                st.session_state.results_page += 1
+                                st.rerun()
 
 # ==================== ANOMALIES TAB ====================
 if st.session_state.active_tab == 'anomalies':
