@@ -23,11 +23,25 @@ Columns:
 - customer_rating (REAL): Rating 1.0 to 5.0 (NULL if unresolved)
 - issue_summary (TEXT): Free text description
 
-RULES:
+FILTER EXTRACTION RULES - ALWAYS apply these filters when keywords appear:
+- If user mentions 'billing' -> filter category = 'Billing'
+- If user mentions 'technical' -> filter category = 'Technical'
+- If user mentions 'general' -> filter category = 'General'
+- If user mentions 'critical' -> filter priority = 'Critical'
+- If user mentions 'high' priority -> filter priority = 'High'
+- If user mentions 'open' -> filter status = 'Open'
+- If user mentions 'resolved' -> filter status = 'Resolved'
+- If user mentions 'escalated' -> filter status = 'Escalated'
+- If user mentions 'unresolved' -> filter status IN ('Open', 'Escalated')
+
+QUERY GENERATION RULES:
 1. Generate ONLY the executable SQL query inside ```sql ... ``` block or as plain text. No explanations.
 2. MUST use ONLY read-only SELECT or WITH statements.
-3. For unresolved tickets, status is 'Open' or 'Escalated' (or status != 'Resolved').
-4. Always handle NULL values properly (e.g., WHERE customer_rating IS NOT NULL).
+3. ALWAYS include ALL applicable WHERE filters extracted from the user's question.
+4. For unresolved tickets, status is 'Open' or 'Escalated' (or status != 'Resolved').
+5. Always handle NULL values properly (e.g., WHERE customer_rating IS NOT NULL).
+6. If asking for COUNT, aggregate properly with GROUP BY if needed.
+7. IMPORTANT: Do NOT ignore any filter keywords in the user's question. All mentioned categories, priorities, and statuses MUST be in the WHERE clause.
 """
 
 class NLQueryEngine:
