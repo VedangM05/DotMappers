@@ -83,6 +83,8 @@ if 'anomalies_data' not in st.session_state:
     st.session_state.anomalies_data = None
 if 'tickets_data' not in st.session_state:
     st.session_state.tickets_data = []
+if 'show_sql' not in st.session_state:
+    st.session_state.show_sql = False
 
 # Sidebar
 with st.sidebar:
@@ -160,29 +162,34 @@ st.divider()
 
 # ==================== DASHBOARD TAB ====================
 if st.session_state.active_tab == 'dashboard':
-    # Stats
+    st.markdown("### Dashboard Overview")
+
+    # Stats Cards
     cols = st.columns(3)
 
     with cols[0]:
-        st.metric(
-            "Total Tickets",
-            st.session_state.dashboard_stats.get('total_tickets', 0) if st.session_state.dashboard_stats else 0
-        )
+        with st.container(border=True):
+            st.metric(
+                "📊 Total Tickets",
+                st.session_state.dashboard_stats.get('total_tickets', 0) if st.session_state.dashboard_stats else 0
+            )
 
     with cols[1]:
-        st.metric(
-            "Queries",
-            len(st.session_state.query_history)
-        )
+        with st.container(border=True):
+            st.metric(
+                "💬 Queries Executed",
+                len(st.session_state.query_history)
+            )
 
     with cols[2]:
-        if st.session_state.query_execution_time:
-            st.metric(
-                "Response Time",
-                f"{st.session_state.query_execution_time}ms"
-            )
-        else:
-            st.metric("Response Time", "N/A")
+        with st.container(border=True):
+            if st.session_state.query_execution_time:
+                st.metric(
+                    "⚡ Response Time",
+                    f"{st.session_state.query_execution_time}ms"
+                )
+            else:
+                st.metric("⚡ Response Time", "—")
 
     st.divider()
 
@@ -211,20 +218,22 @@ if st.session_state.active_tab == 'dashboard':
 
 # ==================== QUERY TAB ====================
 if st.session_state.active_tab == 'query':
+    st.markdown("### Natural Language Query")
+
     # Query Input
-    col1, col2 = st.columns([4, 1])
+    col1, col2 = st.columns([5, 1])
 
     with col1:
         user_query = st.text_input(
-            "Query:",
+            "Ask anything about your support tickets...",
             value=st.session_state.user_query,
-            placeholder="Ask anything about tickets...",
+            placeholder="E.g., How many tickets are open?",
             label_visibility="collapsed"
         )
         st.session_state.user_query = user_query
 
     with col2:
-        execute_button = st.button("⚡ Execute", use_container_width=True)
+        execute_button = st.button("⚡ Execute", use_container_width=True, key="execute_btn")
 
     # Execute Query
     if execute_button and user_query.strip():
@@ -283,32 +292,37 @@ if st.session_state.active_tab == 'query':
                 st.info(result['answer'])
 
             if result.get('data') and len(result.get('data', [])) > 0:
-                st.markdown(f"**Results** ({len(result['data'])} records)")
+                # Results header with count
+                col1, col2, col3 = st.columns([2, 1, 1])
+                with col1:
+                    st.markdown(f"**Results** ({len(result['data'])} {('record' if len(result['data']) == 1 else 'records')})")
+                with col2:
+                    json_str = json.dumps(result['data'], indent=2)
+                    st.download_button(
+                        "📥 Download",
+                        json_str,
+                        "results.json",
+                        "application/json",
+                        use_container_width=True
+                    )
+                with col3:
+                    if 'generated_sql' in result:
+                        if st.button("📋 SQL", use_container_width=True):
+                            st.session_state.show_sql = not st.session_state.get('show_sql', False)
 
-                # Display table
+                # Display table with better styling
                 st.dataframe(
                     result['data'],
                     use_container_width=True,
-                    height=400,
+                    height=300,
                     hide_index=True
                 )
 
-                # Download and SQL buttons
-                col1, col2 = st.columns(2)
-
-                with col1:
-                    json_str = json.dumps(result['data'], indent=2)
-                    st.download_button(
-                        "📥 Download JSON",
-                        json_str,
-                        "query_results.json",
-                        "application/json"
-                    )
-
-                if 'generated_sql' in result:
-                    with col2:
-                        if st.button("📋 Show SQL"):
-                            st.code(result['generated_sql'], language='sql')
+                # Show SQL if requested
+                if st.session_state.get('show_sql') and 'generated_sql' in result:
+                    st.divider()
+                    st.markdown("**Generated SQL**")
+                    st.code(result['generated_sql'], language='sql')
 
 # ==================== ANOMALIES TAB ====================
 if st.session_state.active_tab == 'anomalies':
