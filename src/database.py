@@ -104,39 +104,6 @@ class DatabaseManager:
             
         conn.close()
 
-        # Attempt Supabase Cloud Sync if table exists on Supabase
-        if self.use_supabase and self.supabase_client:
-            try:
-                res = self.supabase_client.table('tickets').select('ticket_id', count='exact').limit(1).execute()
-                if res.count < 500:
-                    logger.info("Syncing 500 records to Supabase Cloud PostgreSQL...")
-                    df = pd.read_csv(CSV_FILE_PATH)
-                    summaries = df['issue_summary'].tolist()
-                    embeddings = generate_batch_embeddings(summaries)
-                    
-                    supabase_payload = []
-                    for idx, row in df.iterrows():
-                        resol_time = None if pd.isna(row['resolution_time_hrs']) else float(row['resolution_time_hrs'])
-                        cust_rating = None if pd.isna(row['customer_rating']) else float(row['customer_rating'])
-                        
-                        supabase_payload.append({
-                            "ticket_id": str(row['ticket_id']),
-                            "created_at": str(row['created_at']),
-                            "category": str(row['category']),
-                            "priority": str(row['priority']),
-                            "status": str(row['status']),
-                            "response_time_hrs": float(row['response_time_hrs']),
-                            "resolution_time_hrs": resol_time,
-                            "agent_id": str(row['agent_id']),
-                            "customer_rating": cust_rating,
-                            "issue_summary": str(row['issue_summary']),
-                            "issue_embedding": embeddings[idx]
-                        })
-                    self.supabase_client.table('tickets').upsert(supabase_payload).execute()
-                    logger.info("Successfully synced 500 records to Supabase Cloud PostgreSQL!")
-            except Exception as e:
-                logger.info("Supabase Cloud table 'tickets' not found or requires schema migration. Run 'supabase/migrations/20260916_init_schema.sql' in your Supabase SQL Editor if you wish to sync cloud tables.")
-
     def get_connection(self):
         """Get a fresh SQLite connection."""
         conn = sqlite3.connect(self.db_path)

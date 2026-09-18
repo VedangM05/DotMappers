@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Any, List
 from src.database import db
-from src.llm_provider import llm
 
 logger = logging.getLogger(__name__)
 
@@ -85,42 +84,18 @@ class AnomalyDetector:
             })
 
         # Deduplicate anomalies by ticket_id + anomaly_type
-        unique_anomalies = []
-        seen = set()
-        for a in anomalies:
-            key = (a['ticket_id'], a['anomaly_type'])
-            if key not in seen:
-                seen.add(key)
-                unique_anomalies.append(a)
+        seen = {}
+        unique_anomalies = [seen.setdefault((a['ticket_id'], a['anomaly_type']), a) for a in anomalies if (a['ticket_id'], a['anomaly_type']) not in seen]
 
-        # Synthesize Summary Narrative
-        summary = self._synthesize_anomaly_narrative(unique_anomalies)
+        crit_count = sum(1 for a in unique_anomalies if a['severity'] == 'CRITICAL')
+        warn_count = sum(1 for a in unique_anomalies if a['severity'] == 'WARNING')
 
         return {
             "total_anomalies": len(unique_anomalies),
-            "critical_count": sum(1 for a in unique_anomalies if a['severity'] == 'CRITICAL'),
-            "warning_count": sum(1 for a in unique_anomalies if a['severity'] == 'WARNING'),
+            "critical_count": crit_count,
+            "warning_count": warn_count,
             "anomalies": unique_anomalies,
-            "narrative_summary": summary
+            "narrative_summary": f"Detected {crit_count} critical and {warn_count} warning anomalies."
         }
-
-    def _synthesize_anomaly_narrative(self, anomalies: List[Dict[str, Any]]) -> str:
-        """Generate AI narrative explaining overall anomaly patterns."""
-        if not anomalies:
-            return "No operational anomalies detected in the support ticket system."
-
-        crit_count = sum(1 for a in anomalies if a['severity'] == 'CRITICAL')
-        warn_count = sum(1 for a in anomalies if a['severity'] == 'WARNING')
-
-        prompt = (
-            f"You are a Quality Control Lead for a Support Team. "
-            f"Analyze these operational ticket anomalies:\n"
-            f"- Total Anomalies Detected: {len(anomalies)} (Critical: {crit_count}, Warning: {warn_count})\n"
-            f"- Sample Anomaly Details:\n" + "\n".join([f"  * [{a['severity']}] {a['ticket_id']} ({a['category']}): {a['anomaly_type']} - {a['details']}" for a in anomalies[:8]]) + "\n\n"
-            "Provide a concise 3-bullet point executive summary highlighting the primary operational risks and recommended agent actions."
-        )
-
-        system_prompt = "Provide a professional, actionable executive summary of operational support ticket anomalies."
-        return llm.generate(prompt=prompt, system_prompt=system_prompt)
 
 anomaly_detector = AnomalyDetector()

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Bot, Shield, Search, AlertTriangle, BarChart3, Database, Sparkles, Terminal,
-  CheckCircle2, RefreshCw, Code2, Users, Clock, Layers, Download, Heart,
-  History, Settings, Moon, Sun, ChevronDown, X, TrendingUp
+  Bot, AlertTriangle, Database, RefreshCw, Download, History, Moon, Sun, ChevronDown, X
 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:8080';

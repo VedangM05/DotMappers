@@ -95,13 +95,7 @@ class NLQueryEngine:
         return sql
 
     def _synthesize_answer(self, user_query: str, sql_query: str, results: List[Dict[str, Any]]) -> str:
-        """Generate simple answer based on query results."""
-        if len(results) == 1 and len(results[0]) == 1:
-            key, val = list(results[0].items())[0]
-            val_str = f"{val:.2f}" if isinstance(val, float) else str(val)
-            return f"Result: {val_str} ({key.replace('_', ' ').title()})"
-
-        # Skip LLM synthesis, just return row count summary
+        """Return row count summary."""
         return f"Found {len(results)} record{'s' if len(results) != 1 else ''}. See results below."
 
 query_engine = NLQueryEngine()
