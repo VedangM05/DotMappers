@@ -85,6 +85,8 @@ if 'tickets_data' not in st.session_state:
     st.session_state.tickets_data = []
 if 'show_sql' not in st.session_state:
     st.session_state.show_sql = False
+if 'auto_execute' not in st.session_state:
+    st.session_state.auto_execute = False
 
 # Sidebar
 with st.sidebar:
@@ -212,6 +214,7 @@ if st.session_state.active_tab == 'dashboard':
             if st.button(query, key=f"sample_{i}", use_container_width=True):
                 st.session_state.user_query = query
                 st.session_state.active_tab = 'query'
+                st.session_state.auto_execute = True
                 st.rerun()
 
     st.divider()
@@ -236,7 +239,9 @@ if st.session_state.active_tab == 'query':
         execute_button = st.button("⚡ Execute", use_container_width=True, key="execute_btn")
 
     # Execute Query
-    if execute_button and user_query.strip():
+    should_execute = execute_button or (st.session_state.auto_execute and user_query.strip())
+
+    if should_execute and user_query.strip():
         start_time = time.time()
         try:
             endpoint = f'{API_BASE}/api/v1/rag/search' if st.session_state.query_mode == 'rag' else f'{API_BASE}/api/v1/query'
@@ -265,6 +270,7 @@ if st.session_state.active_tab == 'query':
 
             st.session_state.query_result = data
             st.session_state.query_execution_time = int((time.time() - start_time) * 1000)
+            st.session_state.auto_execute = False
 
             # Add to history
             if 'error' not in data:
@@ -277,6 +283,7 @@ if st.session_state.active_tab == 'query':
 
         except Exception as e:
             st.session_state.query_result = {'error': f'API Error: {str(e)}'}
+            st.session_state.auto_execute = False
 
     # Display Results
     if st.session_state.query_result:
