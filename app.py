@@ -117,14 +117,6 @@ with st.sidebar:
         label_visibility="collapsed"
     )
 
-    # RLS Role
-    st.markdown("**👤 RLS Role**")
-    st.session_state.rls_role = st.selectbox(
-        "Select role:",
-        options=['admin', 'anon', 'agent_AGT-01'],
-        label_visibility="collapsed"
-    )
-
     st.divider()
 
     # Query History
@@ -229,20 +221,17 @@ if st.session_state.active_tab == 'dashboard':
 if st.session_state.active_tab == 'query':
     st.markdown("### Natural Language Query")
 
-    # Query Input
-    col1, col2 = st.columns([5, 1])
-
-    with col1:
+    # Query Input with Form (Enter to submit)
+    with st.form("query_form", clear_on_submit=False):
         user_query = st.text_input(
             "Ask anything about your support tickets...",
             value=st.session_state.user_query,
             placeholder="E.g., How many tickets are open?",
             label_visibility="collapsed"
         )
-        st.session_state.user_query = user_query
+        execute_button = st.form_submit_button("⚡ Execute", use_container_width=True)
 
-    with col2:
-        execute_button = st.button("⚡ Execute", use_container_width=True, key="execute_btn")
+    st.session_state.user_query = user_query
 
     # Execute Query
     should_execute = execute_button or (st.session_state.auto_execute and user_query.strip())
