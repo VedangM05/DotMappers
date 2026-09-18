@@ -247,6 +247,7 @@ if st.session_state.active_tab == 'query':
 
             with st.spinner("Processing..."):
                 response = requests.post(endpoint, json=body, timeout=30)
+                response.raise_for_status()
                 data = response.json()
 
             # Normalize response
@@ -266,13 +267,13 @@ if st.session_state.active_tab == 'query':
                 st.session_state.query_history = st.session_state.query_history[:10]
 
         except Exception as e:
-            st.session_state.query_result = {'error': f'Failed to connect to backend: {str(e)}'}
+            st.session_state.query_result = {'error': f'API Error: {str(e)}'}
 
     # Display Results
     if st.session_state.query_result:
         result = st.session_state.query_result
 
-        if 'error' in result:
+        if 'error' in result and result['error']:
             st.error(f"❌ {result['error']}")
         else:
             if st.session_state.query_execution_time:
@@ -281,7 +282,7 @@ if st.session_state.active_tab == 'query':
             if 'answer' in result and result['answer']:
                 st.info(result['answer'])
 
-            if 'data' in result and result['data'] and len(result['data']) > 0:
+            if result.get('data') and len(result.get('data', [])) > 0:
                 st.markdown(f"**Results** ({len(result['data'])} records)")
 
                 # Display table
