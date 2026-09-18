@@ -12,7 +12,7 @@ def main():
     parser = argparse.ArgumentParser(description="AI Support Ticket System — DOTMappers Assessment Runner")
     parser.add_argument("--mode", choices=["all", "api", "ui"], default="all", help="Service mode to start")
     parser.add_argument("--api-port", type=int, default=8000, help="FastAPI port")
-    parser.add_argument("--ui-port", type=int, default=8501, help="Streamlit UI port")
+    parser.add_argument("--ui-port", type=int, default=3000, help="Vite React UI port")
     args = parser.parse_args()
 
     # Ensure database initialization

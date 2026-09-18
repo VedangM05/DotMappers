@@ -28,4 +28,4 @@ EMBEDDING_DIM = 384
 
 # Server Ports
 API_PORT = int(os.getenv("API_PORT", 8000))
-UI_PORT = int(os.getenv("UI_PORT", 8501))
+UI_PORT = int(os.getenv("UI_PORT", 3000))

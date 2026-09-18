@@ -1,6 +1,5 @@
 fastapi
 uvicorn
-streamlit
 pandas
 numpy
 pydantic
