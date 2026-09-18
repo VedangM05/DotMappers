@@ -129,7 +129,7 @@ with st.sidebar:
 
 # Main Content
 st.markdown("## AI Support Ticket Analytics")
-st.caption(f"DOTMappers Assessment • Role: **{st.session_state.rls_role.upper()}**")
+st.caption("DOTMappers Assessment")
 
 # Fetch dashboard stats on load
 if st.session_state.dashboard_stats is None:
