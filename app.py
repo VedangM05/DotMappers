@@ -89,6 +89,10 @@ if 'auto_execute' not in st.session_state:
     st.session_state.auto_execute = False
 if 'results_page' not in st.session_state:
     st.session_state.results_page = 0
+if 'anomalies_page' not in st.session_state:
+    st.session_state.anomalies_page = 0
+if 'analytics_page' not in st.session_state:
+    st.session_state.analytics_page = 0
 
 # Sidebar
 with st.sidebar:
@@ -309,7 +313,14 @@ if st.session_state.active_tab == 'query':
                 if result.get('data') and len(result.get('data', [])) > 0:
                     # Show SQL at top if requested
                     if st.session_state.get('show_sql') and 'generated_sql' in result:
-                        st.markdown("<div style='font-weight: 600; color: #F8FAFC; margin-bottom: 0.5rem;'>📋 Generated SQL</div>", unsafe_allow_html=True)
+                        col1, col2 = st.columns([5, 1])
+                        with col1:
+                            st.markdown("<div style='font-weight: 600; color: #F8FAFC; margin-bottom: 0.5rem;'>📋 Generated SQL</div>", unsafe_allow_html=True)
+                        with col2:
+                            if st.button("📋 Copy", key="copy_sql", help="Copy SQL to clipboard"):
+                                st.write(f"<script>navigator.clipboard.writeText(`{result['generated_sql']}`)</script>", unsafe_allow_html=True)
+                                st.success("Copied!", icon="✓")
+
                         st.code(result['generated_sql'], language='sql')
                         st.markdown("---")
 
@@ -348,11 +359,15 @@ if st.session_state.active_tab == 'query':
                     end_idx = start_idx + items_per_page
                     page_data = result['data'][start_idx:end_idx]
 
-                    # Display table
+                    # Display table with minimal height
+                    header_height = 40
+                    row_height = 35
+                    table_height = header_height + (len(page_data) * row_height)
+
                     st.dataframe(
                         page_data,
                         use_container_width=True,
-                        height=150 + (len(page_data) * 35),
+                        height=table_height,
                         hide_index=True
                     )
 
@@ -413,7 +428,7 @@ if st.session_state.active_tab == 'anomalies':
         if 'narrative_summary' in data:
             st.info(data['narrative_summary'])
 
-        # Anomalies Table
+        # Anomalies Table with Pagination
         if 'anomalies' in data and data['anomalies']:
             st.markdown(f"**Flagged Records** ({len(data['anomalies'])} total)")
 
@@ -426,12 +441,43 @@ if st.session_state.active_tab == 'anomalies':
                     'Details': a['details']
                 })
 
+            # Pagination
+            items_per_page = 10
+            total_anomalies = len(anomaly_df_data)
+            total_pages = (total_anomalies + items_per_page - 1) // items_per_page
+
+            start_idx = st.session_state.anomalies_page * items_per_page
+            end_idx = start_idx + items_per_page
+            page_anomalies = anomaly_df_data[start_idx:end_idx]
+
+            header_height = 40
+            row_height = 35
+            table_height = header_height + (len(page_anomalies) * row_height)
+
             st.dataframe(
-                anomaly_df_data,
+                page_anomalies,
                 use_container_width=True,
-                height=400,
+                height=table_height,
                 hide_index=True
             )
+
+            # Pagination controls
+            if total_pages > 1:
+                st.markdown("---")
+                col1, col2, col3 = st.columns([1, 2, 1])
+
+                with col1:
+                    if st.button("← Prev", use_container_width=True, key="prev_anomaly", disabled=st.session_state.anomalies_page == 0):
+                        st.session_state.anomalies_page -= 1
+                        st.rerun()
+
+                with col2:
+                    st.markdown(f"<div style='text-align: center; color: #94A3B8; font-size: 0.9rem;'>Page {st.session_state.anomalies_page + 1} / {total_pages}</div>", unsafe_allow_html=True)
+
+                with col3:
+                    if st.button("Next →", use_container_width=True, key="next_anomaly", disabled=st.session_state.anomalies_page >= total_pages - 1):
+                        st.session_state.anomalies_page += 1
+                        st.rerun()
 
 # ==================== ANALYTICS TAB ====================
 if st.session_state.active_tab == 'analytics':
@@ -506,6 +552,9 @@ if st.session_state.active_tab == 'analytics':
     if filter_agent:
         filtered = [t for t in filtered if t.get('agent_id') == filter_agent]
 
+    # Reset pagination when filters change
+    st.session_state.analytics_page = 0
+
     st.divider()
 
     # Stats
@@ -524,7 +573,7 @@ if st.session_state.active_tab == 'analytics':
 
     st.divider()
 
-    # Table
+    # Table with Pagination
     st.markdown(f"**Tickets** ({len(filtered)} total)")
 
     if filtered:
@@ -539,11 +588,42 @@ if st.session_state.active_tab == 'analytics':
                 'Rating': f"⭐ {t.get('customer_rating', '')}" if t.get('customer_rating') else '—'
             })
 
+        # Pagination
+        items_per_page = 10
+        total_tickets = len(display_data)
+        total_pages = (total_tickets + items_per_page - 1) // items_per_page
+
+        start_idx = st.session_state.analytics_page * items_per_page
+        end_idx = start_idx + items_per_page
+        page_tickets = display_data[start_idx:end_idx]
+
+        header_height = 40
+        row_height = 35
+        table_height = header_height + (len(page_tickets) * row_height)
+
         st.dataframe(
-            display_data,
+            page_tickets,
             use_container_width=True,
-            height=500,
+            height=table_height,
             hide_index=True
         )
+
+        # Pagination controls
+        if total_pages > 1:
+            st.markdown("---")
+            col1, col2, col3 = st.columns([1, 2, 1])
+
+            with col1:
+                if st.button("← Prev", use_container_width=True, key="prev_analytics", disabled=st.session_state.analytics_page == 0):
+                    st.session_state.analytics_page -= 1
+                    st.rerun()
+
+            with col2:
+                st.markdown(f"<div style='text-align: center; color: #94A3B8; font-size: 0.9rem;'>Page {st.session_state.analytics_page + 1} / {total_pages}</div>", unsafe_allow_html=True)
+
+            with col3:
+                if st.button("Next →", use_container_width=True, key="next_analytics", disabled=st.session_state.analytics_page >= total_pages - 1):
+                    st.session_state.analytics_page += 1
+                    st.rerun()
     else:
         st.info("No tickets match the selected filters.")
