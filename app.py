@@ -327,10 +327,17 @@ if st.session_state.active_tab == 'query':
 
                     # Data table
                     st.markdown("---")
+
+                    # Calculate dynamic height based on row count
+                    row_count = len(result['data'])
+                    min_height = 100
+                    height_per_row = 35
+                    table_height = min_height + (row_count * height_per_row)
+
                     st.dataframe(
                         result['data'],
                         use_container_width=True,
-                        height=400,
+                        height=table_height,
                         hide_index=True
                     )
 
