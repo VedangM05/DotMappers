@@ -289,57 +289,64 @@ if st.session_state.active_tab == 'query':
     if st.session_state.query_result:
         result = st.session_state.query_result
 
-        if 'error' in result and result['error']:
-            st.error(f"❌ {result['error']}")
-        else:
-            if st.session_state.query_execution_time:
-                st.success(f"✓ Completed in {st.session_state.query_execution_time}ms")
+        with st.container(border=True):
+            if 'error' in result and result['error']:
+                st.error(f"❌ {result['error']}")
+            else:
+                # Execution time
+                if st.session_state.query_execution_time:
+                    st.markdown(f"<div style='color: #10B981; font-weight: 600; font-size: 0.9rem; margin-bottom: 1rem;'>✓ Completed in {st.session_state.query_execution_time}ms</div>", unsafe_allow_html=True)
 
-            if 'answer' in result and result['answer']:
-                st.info(result['answer'])
+                # Answer/Summary
+                if 'answer' in result and result['answer']:
+                    st.markdown(f"<div style='padding: 0.75rem; background-color: #1E293B; border-radius: 0.3rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: #94A3B8;'>{result['answer']}</div>", unsafe_allow_html=True)
 
-            if result.get('data') and len(result.get('data', [])) > 0:
-                # Results header with count
-                col1, col2, col3 = st.columns([2, 1, 1])
-                with col1:
-                    st.markdown(f"**Results** ({len(result['data'])} {('record' if len(result['data']) == 1 else 'records')})")
-                with col2:
-                    json_str = json.dumps(result['data'], indent=2)
-                    st.download_button(
-                        "📥 Download",
-                        json_str,
-                        "results.json",
-                        "application/json",
-                        use_container_width=True
+                # Results section
+                if result.get('data') and len(result.get('data', [])) > 0:
+                    # Header with buttons
+                    col1, col2, col3 = st.columns([2, 1, 1])
+                    with col1:
+                        st.markdown(f"<div style='font-weight: 600; color: #F8FAFC; margin-bottom: 1rem;'>Results ({len(result['data'])} {('record' if len(result['data']) == 1 else 'records')})</div>", unsafe_allow_html=True)
+
+                    with col2:
+                        json_str = json.dumps(result['data'], indent=2)
+                        st.download_button(
+                            "📥 Export",
+                            json_str,
+                            "results.json",
+                            "application/json",
+                            use_container_width=True,
+                            key="export_btn"
+                        )
+
+                    with col3:
+                        if 'generated_sql' in result:
+                            if st.button("📋 SQL", use_container_width=True, key="sql_toggle"):
+                                st.session_state.show_sql = not st.session_state.get('show_sql', False)
+                                st.rerun()
+
+                    # Data table
+                    st.markdown("---")
+                    st.dataframe(
+                        result['data'],
+                        use_container_width=True,
+                        height=400,
+                        hide_index=True
                     )
-                with col3:
-                    if 'generated_sql' in result:
-                        if st.button("📋 SQL", use_container_width=True):
-                            st.session_state.show_sql = not st.session_state.get('show_sql', False)
 
-                # Display table with better styling
-                st.dataframe(
-                    result['data'],
-                    use_container_width=True,
-                    height=300,
-                    hide_index=True
-                )
-
-                # Show SQL if requested
-                if st.session_state.get('show_sql') and 'generated_sql' in result:
-                    st.divider()
-                    st.markdown("**Generated SQL**")
-                    st.code(result['generated_sql'], language='sql')
+                    # Show SQL if requested
+                    if st.session_state.get('show_sql') and 'generated_sql' in result:
+                        st.markdown("---")
+                        st.markdown("<div style='font-weight: 600; color: #F8FAFC; margin-bottom: 1rem;'>📋 Generated SQL</div>", unsafe_allow_html=True)
+                        st.code(result['generated_sql'], language='sql')
 
 # ==================== ANOMALIES TAB ====================
 if st.session_state.active_tab == 'anomalies':
-    col1, col2 = st.columns([4, 1])
+    st.markdown("### 🚨 Anomaly Detection")
 
-    with col1:
-        st.markdown("### 🚨 Anomaly Detection")
-
-    with col2:
-        if st.button("🔄 Scan", use_container_width=True):
+    col1, col2, col3 = st.columns([3, 1, 1])
+    with col3:
+        if st.button("🔄 Scan", use_container_width=True, key="anomaly_scan"):
             with st.spinner("Scanning for anomalies..."):
                 try:
                     response = requests.get(
